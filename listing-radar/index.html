@@ -1,0 +1,898 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Listing Radar demo: new listings, agent contacts and GoHighLevel sync.">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Listing Radar</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500&display=swap">
+<style>
+/* Layout: fixed ink sidebar + scrolling workspace; inbox is a 3-pane messenger, other views are panels/cards by role */
+:root{
+  --bg:#F3F5F7; --surface:#FFFFFF; --surface-2:#F7F9FA; --line:#E2E7EB; --fg:#16232D; --muted:#5E6D78;
+  --side-bg:#0E2633; --side-fg:#C9D6DE; --side-active:#1B3B4C; --side-muted:#7F97A5;
+  --accent:#0F7C8C; --accent-soft:#E2F2F4; --accent-fg:#FFFFFF;
+  --hot:#C2410C; --hot-soft:#FDEBDF; --warm:#A16207; --warm-soft:#FBF1D6; --cold:#3F6A8A; --cold-soft:#E3EDF5;
+  --good:#15803D; --good-soft:#E0F2E7; --violet:#6D4FC2; --violet-soft:#EEE9FA;
+  --banner-a:#0E2633; --banner-b:#13495A;
+  --chat-bg:#EEF2F1; --bub-in:#FFFFFF; --bub-ai:#DDF1EC; --bub-hu:#E4EAF6;
+  --tip-bg:#0E2633; --tip-fg:#FFFFFF;
+  --f-display:"Manrope",ui-sans-serif,system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",ui-sans-serif,system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0C1419; --surface:#131E25; --surface-2:#18252D; --line:#24343E; --fg:#E4ECF0; --muted:#93A5B0;
+  --side-bg:#08161E; --side-fg:#C9D6DE; --side-active:#16313F; --side-muted:#6F8896;
+  --accent:#3FB5C4; --accent-soft:#123540; --accent-fg:#06232A;
+  --hot:#F28B5B; --hot-soft:#3A2016; --warm:#E3B54A; --warm-soft:#33290F; --cold:#86B3D6; --cold-soft:#18293A;
+  --good:#5BC98A; --good-soft:#132D20; --violet:#A994EE; --violet-soft:#241D3D; --banner-a:#0F2B38; --banner-b:#12404F;
+  --chat-bg:#0F191F; --bub-in:#1A2830; --bub-ai:#15343A; --bub-hu:#1C2740; --tip-bg:#E4ECF0; --tip-fg:#0E2633; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0C1419; --surface:#131E25; --surface-2:#18252D; --line:#24343E; --fg:#E4ECF0; --muted:#93A5B0;
+  --side-bg:#08161E; --side-fg:#C9D6DE; --side-active:#16313F; --side-muted:#6F8896;
+  --accent:#3FB5C4; --accent-soft:#123540; --accent-fg:#06232A;
+  --hot:#F28B5B; --hot-soft:#3A2016; --warm:#E3B54A; --warm-soft:#33290F; --cold:#86B3D6; --cold-soft:#18293A;
+  --good:#5BC98A; --good-soft:#132D20; --violet:#A994EE; --violet-soft:#241D3D; --banner-a:#0F2B38; --banner-b:#12404F;
+  --chat-bg:#0F191F; --bub-in:#1A2830; --bub-ai:#15343A; --bub-hu:#1C2740; --tip-bg:#E4ECF0; --tip-fg:#0E2633; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+*{box-sizing:border-box}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+h1,h2,h3{text-wrap:balance}
+.app{display:grid;grid-template-columns:240px minmax(0,1fr);min-height:100%}
+/* Sidebar */
+.side{background:var(--side-bg);color:var(--side-fg);display:flex;flex-direction:column;position:sticky;top:0;height:100vh;padding:18px 12px;padding-left:max(12px,env(safe-area-inset-left,0px));overflow-y:auto}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav button{display:flex;align-items:center;gap:12px;width:100%;border:0;background:none;color:var(--side-fg);padding:9px 12px;border-radius:8px;text-align:left;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.05)}
+.nav button[aria-current="page"]{background:var(--side-active);color:#fff}
+.nav svg{width:18px;height:18px;flex:none;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav .count{margin-left:auto;font-family:var(--f-mono);font-size:11px;background:rgba(255,255,255,.08);padding:1px 7px;border-radius:20px}
+.nav .count.alert{background:#C2410C;color:#fff}
+.side h6{margin:20px 12px 8px;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--side-muted);font-weight:600}
+.pipes{display:flex;flex-direction:column;gap:2px}
+.pipes div{display:flex;align-items:center;gap:10px;padding:6px 12px;font-size:13px}
+.pipes i{width:8px;height:8px;border-radius:2px;display:block}
+.pipes span:last-child{margin-left:auto;font-family:var(--f-mono);font-size:11px;color:var(--side-muted)}
+.me{margin-top:auto;display:flex;align-items:center;gap:10px;padding:14px 10px 2px;border-top:1px solid rgba(255,255,255,.07)}
+.av{width:32px;height:32px;border-radius:50%;background:#2A5568;color:#fff;display:grid;place-items:center;font-weight:600;font-size:12px;flex:none}
+.me b{display:block;color:#fff;font-size:13px;font-weight:600}
+.me small{color:var(--side-muted);font-size:11.5px}
+/* Main */
+.main{min-width:0;display:flex;flex-direction:column}
+.top{display:flex;align-items:center;gap:14px;padding-block:14px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--surface)}
+.top h1{font-family:var(--f-display);font-size:19px;margin:0;line-height:1.2}
+.top p{margin:0;color:var(--muted);font-size:12.5px}
+.top .grow{flex:1;min-width:0}
+.search{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface-2);border-radius:9px;padding:8px 12px;width:260px;max-width:100%}
+.search input{border:0;background:none;outline:0;width:100%}
+.search svg,.iconbtn svg{width:16px;height:16px;stroke:var(--muted);fill:none;stroke-width:2;stroke-linecap:round}
+.iconbtn{border:1px solid var(--line);background:var(--surface);border-radius:9px;width:38px;height:38px;display:grid;place-items:center;position:relative;flex:none}
+.iconbtn .dot{position:absolute;top:8px;right:9px;width:7px;height:7px;border-radius:50%;background:var(--hot)}
+.btn{border:0;border-radius:9px;padding:9px 16px;font-weight:600;background:var(--accent);color:var(--accent-fg);display:inline-flex;align-items:center;gap:8px;white-space:nowrap}
+.btn.ghost{background:var(--surface);color:var(--fg);border:1px solid var(--line)}
+.btn.small{padding:6px 11px;font-size:12.5px}
+.btn:disabled{opacity:.45;cursor:default}
+.menu{display:none}
+.content{padding-block:24px 40px;padding-left:max(28px,env(safe-area-inset-left,0px));padding-right:max(28px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:20px}
+.demo-tag{font-size:11px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--warm);background:var(--warm-soft);padding:3px 8px;border-radius:5px}
+.note{color:var(--muted);font-size:13px;margin:0}
+/* Home */
+.banner{border-radius:14px;padding:24px 28px;color:#fff;background:linear-gradient(120deg,var(--banner-a),var(--banner-b));display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.banner .big{width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.12);display:grid;place-items:center;font-family:var(--f-display);font-weight:700;font-size:19px}
+.banner small{opacity:.75}
+.banner h2{font-family:var(--f-display);font-size:26px;margin:2px 0}
+.banner .meta{margin-left:auto;text-align:right;font-size:13px}
+.banner .meta b{display:block;font-size:15px}
+.banner .meta span{opacity:.75}
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:10px;cursor:help}
+.stat:hover{border-color:var(--accent)}
+.stat .row{display:flex;align-items:center;justify-content:space-between}
+.stat .ic{width:34px;height:34px;border-radius:8px;display:grid;place-items:center}
+.stat .ic svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.stat .num{font-family:var(--f-display);font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.stat .lab{color:var(--muted);font-size:13px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:14px;align-items:start}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px 20px;min-width:0}
+.panel h3{font-family:var(--f-display);font-size:15px;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.panel h3 .link{margin-left:auto;font-family:var(--f-body);font-size:12.5px;font-weight:500;color:var(--accent);background:none;border:0}
+.rows{display:flex;flex-direction:column}
+.lrow{display:flex;align-items:center;gap:12px;padding:10px 4px;border:0;border-top:1px solid var(--line);background:none;text-align:left;width:100%}
+.lrow:first-child{border-top:0}
+.lrow:hover{background:var(--surface-2)}
+.lrow .who{min-width:0;flex:1}
+.lrow .who b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lrow .who small{color:var(--muted);display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.when{font-size:12.5px;font-weight:600;white-space:nowrap}
+.kv{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--line)}
+.kv:first-of-type{border-top:0}
+.kv span{color:var(--muted)}
+.kv b{font-variant-numeric:tabular-nums;text-align:right}
+.pill{font-size:11.5px;font-weight:600;padding:2px 9px;border-radius:20px;white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.Hot{color:var(--hot);background:var(--hot-soft)} .Warm{color:var(--warm);background:var(--warm-soft)} .Cold{color:var(--cold);background:var(--cold-soft)}
+.mode{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.mode.ai{background:var(--accent-soft);color:var(--accent)}
+.mode.human{background:var(--violet-soft);color:var(--violet)}
+.feed{display:flex;flex-direction:column;gap:12px}
+.ev{display:flex;gap:10px;font-size:13px}
+.ev i{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;flex:none;font-style:normal;font-size:11px;font-weight:700}
+.ev small{display:block;color:var(--muted);font-size:11.5px}
+/* Inbox */
+.inbox{display:grid;grid-template-columns:300px minmax(0,1fr) 290px;background:var(--surface);border:1px solid var(--line);border-radius:12px;overflow:hidden;height:calc(100vh - 150px);min-height:560px}
+.ilist{border-right:1px solid var(--line);display:flex;flex-direction:column;min-width:0}
+.ilist .tabs{display:flex;gap:6px;padding:12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.chip{border:1px solid var(--line);background:var(--surface);border-radius:20px;padding:4px 11px;font-size:12.5px;font-weight:500;color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--accent-soft);border-color:transparent;color:var(--accent)}
+.convs{overflow-y:auto;flex:1}
+.conv{display:flex;gap:10px;padding:12px 14px;border:0;border-bottom:1px solid var(--line);background:none;width:100%;text-align:left;align-items:flex-start}
+.conv:hover{background:var(--surface-2)}
+.conv[aria-current="true"]{background:var(--accent-soft)}
+.conv .av{background:var(--accent)}
+.conv .mid{min-width:0;flex:1}
+.conv .mid b{display:flex;gap:6px;align-items:center;font-weight:600}
+.conv .mid b span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv .mid small{display:block;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:12.5px}
+.conv .rt{display:flex;flex-direction:column;align-items:flex-end;gap:5px;font-size:11px;color:var(--muted);flex:none}
+.unread{background:var(--good);color:#fff;font-family:var(--f-mono);font-size:10.5px;border-radius:20px;padding:0 6px;line-height:17px}
+.chat{display:flex;flex-direction:column;min-width:0;background:var(--chat-bg)}
+.chat header{display:flex;align-items:center;gap:10px;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line);flex-wrap:wrap}
+.chat header .who{min-width:0;flex:1}
+.chat header b{display:block}
+.chat header small{color:var(--muted);font-size:12px}
+.back{display:none}
+.msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:8px}
+.bub{max-width:min(78%,460px);padding:8px 12px;border-radius:12px;font-size:13.5px;position:relative;box-shadow:0 1px 1px rgba(10,30,40,.06)}
+.bub small{display:block;font-size:10.5px;color:var(--muted);margin-top:3px}
+.bub.c{background:var(--bub-in);align-self:flex-start;border-top-left-radius:4px}
+.bub.a{background:var(--bub-ai);align-self:flex-end;border-top-right-radius:4px}
+.bub.h{background:var(--bub-hu);align-self:flex-end;border-top-right-radius:4px}
+.bub .tag{font-size:10px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;display:block;margin-bottom:2px}
+.bub.a .tag{color:var(--accent)} .bub.h .tag{color:var(--violet)}
+.sysmsg{align-self:center;font-size:12px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:3px 12px;text-align:center}
+.typing{align-self:flex-end;font-size:12px;color:var(--accent);font-style:italic}
+.composer{display:flex;gap:8px;padding:10px 12px;background:var(--surface);border-top:1px solid var(--line);flex-wrap:wrap}
+.composer select{border:1px solid var(--line);border-radius:8px;padding:8px;background:var(--surface-2);font-size:12.5px}
+.composer input{flex:1;min-width:140px;border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface-2)}
+.quick{display:flex;gap:6px;padding:8px 12px 0;flex-wrap:wrap;background:var(--surface)}
+.quick button{border:1px dashed var(--line);background:none;border-radius:20px;padding:3px 10px;font-size:12px;color:var(--muted)}
+.quick button:hover{border-color:var(--accent);color:var(--accent)}
+.modeswitch{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.modeswitch button{border:0;background:none;padding:6px 11px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.modeswitch button[aria-pressed="true"].ai{background:var(--accent-soft);color:var(--accent)}
+.modeswitch button[aria-pressed="true"].human{background:var(--violet-soft);color:var(--violet)}
+.runpanel{background:var(--surface);border:1px solid var(--accent);border-radius:12px;padding:12px 14px;align-self:stretch;font-size:13px}
+.runpanel h4{margin:0 0 8px;font-family:var(--f-display);font-size:13.5px;display:flex;align-items:center;gap:8px}
+.runpanel h4 button{margin-left:auto}
+.runpanel ol{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px}
+.runpanel li{display:flex;gap:8px;align-items:flex-start}
+.runpanel li i{width:18px;height:18px;border-radius:50%;background:var(--good);color:#fff;font-style:normal;font-size:10px;display:grid;place-items:center;flex:none;margin-top:1px}
+.runpanel li small{color:var(--muted);display:block;font-size:11.5px}
+.info{border-left:1px solid var(--line);overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.info h4,.drawer h4{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 6px;font-weight:600}
+.ai-box{background:var(--accent-soft);border-radius:10px;padding:11px 13px;font-size:13px}
+.ai-box b{color:var(--accent)}
+.mem{display:flex;flex-direction:column;gap:5px;margin:0;padding:0;list-style:none;font-size:13px}
+.mem li{background:var(--surface-2);border:1px solid var(--line);border-radius:7px;padding:5px 9px}
+select.full{border:1px solid var(--line);border-radius:8px;padding:8px 11px;background:var(--surface-2);width:100%}
+/* Board */
+.tools{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:9px;overflow:hidden;background:var(--surface)}
+.seg button{border:0;background:none;padding:7px 13px;font-size:13px;font-weight:500;color:var(--muted)}
+.seg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent)}
+.board{display:grid;grid-auto-flow:column;grid-auto-columns:minmax(240px,1fr);gap:14px;overflow-x:auto;padding-bottom:8px}
+.col{background:var(--surface-2);border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:300px}
+.col.over{border-color:var(--accent);background:var(--accent-soft)}
+.col header{display:flex;align-items:center;gap:8px;font-weight:600;font-family:var(--f-display)}
+.col header i{width:9px;height:9px;border-radius:2px}
+.col header span{margin-left:auto;font-family:var(--f-mono);font-size:11.5px;color:var(--muted)}
+.col .sum{font-size:12px;color:var(--muted);margin-top:-6px;font-variant-numeric:tabular-nums}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:8px;cursor:grab;text-align:left;width:100%}
+.card:hover{border-color:var(--accent)}
+.card.dragging{opacity:.4}
+.card .t{display:flex;justify-content:space-between;gap:8px;align-items:flex-start}
+.card b{font-weight:600}
+.card small{color:var(--muted)}
+.card .f{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--muted);gap:6px}
+.card .f b{color:var(--fg);font-variant-numeric:tabular-nums}
+.empty-col{color:var(--muted);font-size:12.5px;text-align:center;padding:20px 8px;border:1px dashed var(--line);border-radius:9px}
+/* Table */
+.tablewrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{text-align:left;font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--surface-2)}
+td{padding:12px 16px;border-bottom:1px solid var(--line);vertical-align:middle}
+tbody tr.click{cursor:pointer}
+tbody tr.click:hover{background:var(--surface-2)}
+tbody tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}
+td.c,th.c{text-align:center}
+.stage-chip{font-size:12px;padding:2px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);white-space:nowrap}
+.mono{font-family:var(--f-mono);font-size:12px}
+/* Agents */
+.agents{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.agent{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px;text-align:left;cursor:pointer}
+.agent[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.agent header{display:flex;align-items:center;gap:10px}
+.agent .aic{width:32px;height:32px;border-radius:9px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-weight:800;font-family:var(--f-display);font-size:12px;flex:none}
+.agent b{font-family:var(--f-display);font-size:14px}
+.agent p{margin:0;color:var(--muted);font-size:12.5px}
+.agent .runs{font-size:12px;color:var(--muted);margin-top:auto}
+.editor{display:flex;flex-direction:column;gap:12px}
+.editor label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.editor textarea,.editor input,.editor select{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface-2);font-weight:400;color:var(--fg)}
+.editor .two{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.checks{display:flex;flex-wrap:wrap;gap:8px}
+.checks label{flex-direction:row;align-items:center;gap:7px;border:1px solid var(--line);border-radius:8px;padding:6px 10px;font-weight:500;color:var(--fg);background:var(--surface-2)}
+.play{display:flex;flex-direction:column;background:var(--chat-bg);border:1px solid var(--line);border-radius:12px;overflow:hidden;height:440px}
+.play .msgs{padding:14px}
+/* Automations */
+.autos{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:14px}
+.auto{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.auto:hover{border-color:var(--accent)}
+.auto header{display:flex;align-items:center;gap:10px}
+.auto header b{font-family:var(--f-display);font-size:14.5px}
+.auto p{margin:0;color:var(--muted);font-size:13px}
+.auto .trig{font-family:var(--f-mono);font-size:11.5px;color:var(--accent)}
+.auto .runs{font-size:12px;color:var(--muted);margin-top:auto}
+.switch{margin-left:auto;width:38px;height:22px;border-radius:20px;border:0;background:var(--line);position:relative;flex:none}
+.switch::after{content:"";position:absolute;top:3px;left:3px;width:16px;height:16px;border-radius:50%;background:#fff;transition:left .15s}
+.switch[aria-checked="true"]{background:var(--good)}
+.switch[aria-checked="true"]::after{left:19px}
+/* Reports */
+.chart svg{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.legend{display:flex;gap:14px;font-size:12px;color:var(--muted);margin-bottom:6px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.hbar{display:flex;flex-direction:column;gap:12px}
+.hbar .r{display:grid;grid-template-columns:130px minmax(0,1fr) 40px;gap:10px;align-items:center;font-size:13px}
+.hbar .track{height:10px;background:var(--surface-2);border-radius:5px;overflow:hidden}
+.hbar .track div{height:100%;background:var(--accent);border-radius:5px}
+.hbar .r b{text-align:right;font-variant-numeric:tabular-nums}
+.funnel{display:flex;flex-direction:column;gap:8px}
+.funnel .step{display:flex;align-items:center;gap:12px}
+.funnel .bar{height:30px;border-radius:7px;background:var(--accent);color:var(--accent-fg);display:flex;align-items:center;padding:0 10px;font-weight:600;font-size:12.5px;min-width:44px}
+.funnel .step span{font-size:13px;color:var(--muted)}
+/* Workflow */
+.wf-wrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+.wf{position:relative;width:1180px;height:480px;background-image:radial-gradient(var(--line) 1.2px,transparent 1.2px);background-size:20px 20px}
+.wf svg.wires{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.wire{fill:none;stroke:var(--line);stroke-width:1.6;transition:stroke .2s,opacity .2s}
+.wf .lbl{font-size:11px;font-weight:600;fill:var(--muted);font-family:var(--f-body);transition:opacity .2s}
+.wire.lit{stroke:var(--accent);stroke-width:2.4;stroke-dasharray:7 6;animation:flow .6s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-13}}
+.wf.focus .wire:not(.lit){opacity:.35}
+.wf.focus .lbl{opacity:.4}
+.wf .dotend{fill:var(--line)}
+.node{position:absolute;width:150px;display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;transition:opacity .2s;cursor:pointer;border-radius:12px;padding:2px 0}
+.node .tile{width:66px;height:66px;border-radius:16px;background:var(--surface);border:2px solid var(--line);display:grid;place-items:center;box-shadow:0 2px 6px rgba(10,30,40,.08);position:relative;transition:border-color .2s,transform .2s,box-shadow .2s}
+.node .tile svg{width:30px;height:30px;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.node.trigger .tile{border-radius:30px 16px 16px 30px}
+.node b{font-size:12.5px;font-weight:600;line-height:1.25}
+.node small{font-size:11px;color:var(--muted);line-height:1.3}
+.wf.focus .node:not(.hl):not(.near){opacity:.45}
+.node.near .tile{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.node.hl .tile{border-color:var(--accent);transform:scale(1.07);box-shadow:0 0 0 6px var(--accent-soft)}
+.node.done .tile::after{content:"✓";position:absolute;right:-8px;top:-8px;width:20px;height:20px;border-radius:50%;background:var(--good);color:#fff;font-size:11px;font-weight:700;display:grid;place-items:center}
+.runbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+.runbar .prog{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.wf-legend{display:flex;gap:10px;flex-wrap:wrap}
+.app-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:5px 10px;font-size:12.5px;font-weight:500}
+.app-chip i{width:10px;height:10px;border-radius:3px}
+/* Team */
+.perm input{width:16px;height:16px;accent-color:var(--accent)}
+.role{font-size:12px;font-weight:600;padding:2px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
+/* Drawer + modal */
+.scrim{position:fixed;inset:0;background:rgba(6,16,22,.45);z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:100%;background:var(--surface);z-index:21;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
+.drawer header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;gap:12px;align-items:flex-start}
+.drawer header h2{font-family:var(--f-display);font-size:18px;margin:0}
+.drawer header small{color:var(--muted)}
+.drawer .body{padding:18px 22px;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.mail{border:1px solid var(--line);border-radius:10px;padding:12px 14px;font-size:13px;white-space:pre-line;background:var(--bub-ai)}
+.close{margin-left:auto;border:0;background:none;font-size:22px;line-height:1;color:var(--muted)}
+.modal{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:520px;max-width:calc(100% - 32px);max-height:calc(100% - 40px);overflow-y:auto;background:var(--surface);border-radius:14px;z-index:21;border:1px solid var(--line)}
+.modal header{padding:18px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center}
+.modal header h2{font-family:var(--f-display);font-size:18px;margin:0}
+form.f{padding:18px 22px;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+form.f label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:600;color:var(--muted)}
+form.f .full{grid-column:1/-1}
+form.f input,form.f select,form.f textarea{border:1px solid var(--line);border-radius:8px;padding:9px 11px;background:var(--surface-2);font-weight:400;color:var(--fg)}
+form.f .act{grid-column:1/-1;display:flex;gap:10px;justify-content:flex-end;padding-top:6px}
+/* Tooltip */
+#tip{position:fixed;z-index:40;max-width:280px;background:var(--tip-bg);color:var(--tip-fg);border-radius:10px;padding:10px 12px;font-size:12.5px;line-height:1.45;box-shadow:0 8px 24px rgba(6,16,22,.25);pointer-events:none}
+#tip.pinned{pointer-events:auto}
+#tip b{display:block;font-family:var(--f-display);font-size:13px;margin-bottom:3px}
+#tip .app{display:inline-block;font-size:10.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;opacity:.75;margin-bottom:4px}
+#tip .saved{display:block;margin-top:6px;font-weight:600;color:#7FE0B0}
+#tip .ex{display:block;margin-top:6px;font-family:var(--f-mono);font-size:11px;opacity:.85;white-space:pre-wrap}
+#tip::after{content:"";position:absolute;left:var(--ax,50%);bottom:-6px;width:12px;height:12px;background:var(--tip-bg);transform:translateX(-50%) rotate(45deg);border-radius:2px}
+#tip.below::after{bottom:auto;top:-6px}
+:root[data-theme="dark"] #tip .saved{color:var(--good)}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) #tip .saved{color:#15803D}}
+@media (prefers-reduced-motion:reduce){.wire.lit{animation:none}.node .tile,.wire,.node{transition:none}.switch::after{transition:none}}
+/* Responsive */
+@media (max-width:1250px){.inbox{grid-template-columns:280px minmax(0,1fr)}.info{display:none}.agents{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:1100px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:820px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:22;transform:translateX(-100%);transition:transform .2s;height:100%;padding-top:calc(18px + env(safe-area-inset-top,0px))}
+  .side.open{transform:none}
+  .menu{display:grid}
+  .search{display:none}
+  .top{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .content{padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+  .banner .meta{margin-left:0;text-align:left}
+  .btn .lbl{display:none}
+  .inbox{grid-template-columns:minmax(0,1fr);height:calc(100vh - 130px)}
+  .inbox .chat{display:none}
+  .inbox.open .ilist{display:none}
+  .inbox.open .chat{display:flex}
+  .back{display:grid}
+  .editor .two{grid-template-columns:1fr}
+}
+@media (max-width:480px){.stats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.stat .num{font-size:24px}form.f{grid-template-columns:1fr}.top p{display:none}.agents{grid-template-columns:minmax(0,1fr)}.hbar .r{grid-template-columns:96px minmax(0,1fr) 32px}}
+
+/* Listing Radar additions */
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.fact{background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:8px 10px}
+.fact small{display:block;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.fact b{font-variant-numeric:tabular-nums}
+.ptype{font-size:11px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.ptype.direct{background:var(--good-soft);color:var(--good)}
+.ptype.office{background:var(--warm-soft);color:var(--warm)}
+.src{display:inline-flex;gap:4px;flex-wrap:wrap}
+.src span{font-size:11px;border:1px solid var(--line);border-radius:5px;padding:0 6px;color:var(--muted);background:var(--surface-2)}
+.status{font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:5px;white-space:nowrap}
+.st-new{background:var(--accent-soft);color:var(--accent)} .st-soon{background:var(--violet-soft);color:var(--violet)} .st-drop{background:var(--hot-soft);color:var(--hot)}
+.ghl{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;color:var(--good)}
+.ghl::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.ghl.pending{color:var(--warm)}
+tr.fresh td{background:var(--accent-soft)}
+.searches{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.search-card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:8px}
+.search-card header{display:flex;align-items:center;gap:10px}
+.search-card header b{font-family:var(--f-display);font-size:14.5px}
+.search-card .kvs{display:flex;flex-direction:column;gap:3px;font-size:13px}
+.search-card .kvs span{color:var(--muted)}
+.search-card footer{display:flex;align-items:center;gap:8px;margin-top:auto;font-size:12px;color:var(--muted)}
+.search-card footer .btn{margin-left:auto}
+.dsrc{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.ds{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.ds b{font-family:var(--f-display)}
+.ds p{margin:0;color:var(--muted);font-size:13px}
+.ok{font-size:12px;font-weight:600;color:var(--good)}
+.checklist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13.5px}
+.checklist li{display:flex;gap:8px}
+.checklist li::before{content:"✓";color:var(--good);font-weight:700}
+.listrow{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-top:1px solid var(--line);font-size:13px}
+.listrow:first-child{border-top:0}
+@media (max-width:1100px){.dsrc{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:480px){.facts{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+
+
+<div class="app">
+  <aside class="side" id="side">
+    <nav class="nav" id="nav" aria-label="Main"></nav>
+    <h6>Outreach stages</h6>
+    <div class="pipes" id="pipes"></div>
+    <div class="me"><div class="av">SC</div><div><b>Sam Carter</b><small>Owner · Brightline Partners</small></div></div>
+  </aside>
+  <main class="main">
+    <div class="top">
+      <button class="iconbtn menu" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+      <div class="grow"><h1 id="vTitle">Home</h1><p id="vSub"></p></div>
+      <label class="search"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg><input id="q" placeholder="Search address, agent, brokerage…" aria-label="Search"></label>
+      <button class="iconbtn" aria-label="New listing alerts" id="bell" data-tip-title="New listing alerts" data-tip="Your team gets a Slack or Telegram alert each time new listings land in GoHighLevel. Click to see them."><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/></svg><span class="dot"></span></button>
+      <button class="btn" id="newBtn"><span aria-hidden="true">+</span><span class="lbl">New Search</span></button>
+    </div>
+    <div class="content" id="view"></div>
+  </main>
+</div>
+<div id="overlay"></div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script>
+const I={
+ home:'<path d="M3 11 12 4l9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ listings:'<path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-6h6v6"/>',
+ agents:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5M16 4.5a3.5 3.5 0 0 1 0 7M18 15c1.8.6 3 2.2 3.5 5"/>',
+ board:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v10"/>',
+ searches:'<circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5M8 11h6M11 8v6"/>',
+ workflow:'<rect x="2" y="9" width="6" height="6" rx="1.5"/><rect x="16" y="3" width="6" height="6" rx="1.5"/><rect x="16" y="15" width="6" height="6" rx="1.5"/><path d="M8 12h4m0 0V6h4m-4 6v6h4"/>',
+ automations:'<path d="M13 2 4 14h7l-1 8 9-12h-7z"/>',
+ reports:'<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+ setup:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V21a2 2 0 1 1-4 0v-.1a1.6 1.6 0 0 0-2.7-1.1l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1A1.6 1.6 0 0 0 3.6 15H3a2 2 0 1 1 0-4h.1a1.6 1.6 0 0 0 1.1-2.7l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1A1.6 1.6 0 0 0 9.7 4.4V3a2 2 0 1 1 4 0v.1a1.6 1.6 0 0 0 2.7 1.1l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0 1.1 2.7H21a2 2 0 1 1 0 4h-.1a1.6 1.6 0 0 0-1.5 1.3z"/>'
+};
+const VIEWS=[
+ ['home','Home','New listings and agents found for you today'],
+ ['listings','New Listings','Every new listing, with its agent matched'],
+ ['agents','Agent Database','Listing agents with direct contact details'],
+ ['board','Outreach Pipeline','GoHighLevel opportunities, drag to update'],
+ ['searches','Saved Searches','Where and what the system watches'],
+ ['workflow','Workflow','How the apps connect behind the scenes'],
+ ['automations','Automations','What runs on its own, all day'],
+ ['reports','Reports','Listings and agents collected over time'],
+ ['setup','GHL & Data Setup','Sub-account fields, tags, duplicates and data sources']
+];
+const TODAY=new Date(2026,10,3,9,40),START=Date.now(),now=()=>+TODAY+(Date.now()-START);
+const H=36e5,M=6e4,DAY=864e5;
+let stages=[
+ {id:'new',name:'New agent',color:'#3F8FA6'},
+ {id:'contacted',name:'Contacted',color:'#8A6FD1'},
+ {id:'replied',name:'Replied',color:'#D08A2E'},
+ {id:'meeting',name:'Meeting set',color:'#2E9E6A'},
+ {id:'partner',name:'Partner',color:'#15803D'}
+];
+let aid=0;
+const A=(name,brok,phone,direct,stage,agoH,note)=>{const slug=name.toLowerCase().replace(/[^a-z]+/g,'.');return{id:'a'+(++aid),name,brok,phone,ptype:direct?'Direct mobile':'Office only',email:slug+'@'+brok.toLowerCase().split(' ')[0]+'-demo.com',profile:'agents.example.com/'+slug.replace(/\./g,'-'),stage,first:+TODAY-agoH*H,note,ghlId:'GHL-'+(48210+aid*37)}};
+let agents=[
+ A('Rachel Moreno','Hillcrest Realty Group','+1 (555) 014-2290',1,'new',0.5,'Lists mid-market family homes in South Austin. 3 active listings.'),
+ A('Derek Hollis','Lone Oak Properties','+1 (555) 017-6612',1,'contacted',30,'High-volume agent in Round Rock. Responds fast by text.'),
+ A('Mei Tanaka','Bluebonnet Home Co.','+1 (555) 012-8834',1,'replied',70,'Condo specialist downtown. Asked for pricing details.'),
+ A('Carlos Vega','Hillcrest Realty Group','+1 (555) 019-4471',1,'new',2,'New to the database. Luxury listing in Westlake.'),
+ A('Brianna Scott','Capitol Key Realty','+1 (555) 016-3308',1,'meeting',120,'Meeting booked for Thursday 2:00 PM.'),
+ A('Owen Price','Lone Oak Properties','+1 (555) 010-7700',0,'new',4,'Only the brokerage office number is public. Email found on profile.'),
+ A('Sofia Delgado','Riverline Real Estate','+1 (555) 018-5526',1,'contacted',48,'Lists starter homes in Pflugerville.'),
+ A('Jamal Wright','Capitol Key Realty','+1 (555) 013-9145',1,'partner',300,'Active partner. 6 listings sent our way this quarter.'),
+ A('Hannah Fox','Bluebonnet Home Co.','+1 (555) 015-2063',1,'new',6,'Georgetown townhome specialist.'),
+ A('Victor Lin','Riverline Real Estate','+1 (555) 010-7788',0,'contacted',90,'Office number only. Reached by email last week.'),
+ A('Nora Blake','Cedar & Stone Realty','+1 (555) 017-4419',1,'new',1,'Cedar Park new-build listings.')
+];
+let lid=0;
+const L=(addr,city,price,type,beds,baths,sqft,agoH,status,seen,agent)=>({id:'l'+(++lid),addr,city,price,type,beds,baths,sqft,listed:+TODAY-agoH*H,status,seen,agent,url:'listings.example.com/'+(73000+lid*91),ghl:'Synced',fresh:false});
+let listings=[
+ L('4812 Juniper Ridge Dr','Austin',689000,'Single family',4,3,2410,0.6,'New',['Zillow','Realtor.com','Redfin'],'a1'),
+ L('1207 Lakeview Terrace','Austin',1450000,'Single family',5,4.5,4120,2,'New',['Zillow','Redfin','Homes.com'],'a4'),
+ L('300 Congress Ave #1104','Austin',412000,'Condo',1,1,780,3,'New',['Realtor.com','Zillow'],'a3'),
+ L('2218 Oak Hollow Ln','Round Rock',459000,'Single family',3,2,1890,4,'Price drop',['Zillow','Redfin'],'a2'),
+ L('915 Brushy Creek Way','Round Rock',535000,'Single family',4,2.5,2260,5,'New',['Realtor.com','Homes.com'],'a6'),
+ L('77 Meadowlark Ct','Pflugerville',339000,'Townhouse',3,2.5,1540,7,'New',['Zillow','Realtor.com'],'a7'),
+ L('6603 San Gabriel Blvd','Georgetown',398000,'Townhouse',3,2,1620,6,'Coming soon',['Redfin','Homes.com'],'a9'),
+ L('1450 Whitestone Pkwy','Cedar Park',612000,'Single family',4,3,2580,1,'New',['Zillow','Realtor.com','Redfin','Homes.com'],'a11'),
+ L('4410 Barton Hills Dr','Austin',879000,'Single family',4,3,2650,10,'New',['Zillow','Redfin'],'a1'),
+ L('200 Rainey St #2205','Austin',525000,'Condo',2,2,1105,12,'Price drop',['Realtor.com','Zillow'],'a3'),
+ L('3120 Kenney Fort Blvd','Round Rock',474000,'Single family',3,2,1950,20,'New',['Zillow','Homes.com'],'a2'),
+ L('18 Pecan Grove Cir','Pflugerville',299000,'Townhouse',2,2,1210,26,'New',['Redfin'],'a7'),
+ L('9801 Great Hills Trl','Austin',1180000,'Single family',5,4,3890,30,'Coming soon',['Zillow','Realtor.com'],'a5'),
+ L('512 Rivery Blvd','Georgetown',565000,'Single family',4,3,2340,40,'New',['Realtor.com','Redfin'],'a10'),
+ L('2701 S Lamar Blvd #318','Austin',368000,'Condo',1,1,720,44,'New',['Zillow'],'a8')
+];
+let searches=[
+ {id:'s1',name:'Austin core',loc:'Austin, TX',min:300000,max:1500000,type:'Any',freq:'Every 2 hours',on:true,found:46},
+ {id:'s2',name:'North suburbs',loc:'Round Rock, Cedar Park, Georgetown',min:250000,max:800000,type:'Single family',freq:'Every 2 hours',on:true,found:31},
+ {id:'s3',name:'Luxury watch',loc:'Austin, TX (Westlake, Barton Hills)',min:1000000,max:null,type:'Single family',freq:'Every hour',on:true,found:9},
+ {id:'s4',name:'Starter homes',loc:'Pflugerville, Manor',min:200000,max:380000,type:'Townhouse',freq:'Twice a day',on:false,found:14}
+];
+let autos=[
+ {id:'scan',name:'Listing scan',trig:'Every 2 hours, 6 AM–10 PM',app:'Licensed listing feed (MLS/IDX) + property data API',saved:'~2 hrs/day of checking 4 sites by hand',desc:'Pulls new listings that match your saved searches from approved data sources.',on:true,runs:248},
+ {id:'ai',name:'AI extract + clean',trig:'Each new listing',app:'Claude',saved:'~3 min per listing of copy-paste',desc:'Reads each listing, fills in price, beds, baths, sqft and status, fixes formatting and tags a category.',on:true,runs:612},
+ {id:'dupe',name:'Duplicate guard',trig:'Before anything is saved',app:'Supabase + GoHighLevel search',saved:'No double outreach to the same agent',desc:'Matches by address and by agent phone/email so the same home or agent is never added twice.',on:true,runs:612},
+ {id:'enrich',name:'Agent contact finder',trig:'When a listing has a new agent',app:'Agent directory + enrichment API',saved:'~6 min per agent of searching',desc:'Finds the agent\'s public business mobile, email and profile. Prefers direct numbers over office lines.',on:true,runs:173},
+ {id:'ghl',name:'GoHighLevel sync',trig:'After cleaning + matching',app:'GoHighLevel API (sub-account)',saved:'~4 min per contact of data entry',desc:'Creates or updates the agent contact, fills custom fields, adds tags and opens an opportunity.',on:true,runs:173},
+ {id:'alert',name:'New listing alert',trig:'When a listing matches a hot search',app:'Slack or Telegram',saved:'Your team reaches agents first',desc:'Sends a short alert with the address, price and the agent\'s direct number.',on:true,runs:58},
+ {id:'report',name:'Daily report',trig:'Every day at 7:00 AM',app:'Supabase + Claude + Email',saved:'~15 min/day of reporting',desc:'Emails yesterday\'s counts: listings found, new agents, direct numbers found, duplicates blocked.',on:true,runs:30},
+ {id:'drop',name:'Price drop watch',trig:'When a tracked listing\'s price changes',app:'Listing feed + GoHighLevel',saved:'Catch motivated sellers early',desc:'Adds a "price-drop" tag and moves the opportunity to the top of the list.',on:false,runs:0}
+];
+let events=[
+ {t:+TODAY-36*M,ic:'+',k:'acc',txt:'<b>4812 Juniper Ridge Dr</b> found',sub:'Austin · $689,000 · agent Rachel Moreno'},
+ {t:+TODAY-35*M,ic:'☎',k:'good',txt:'Direct mobile found for <b>Rachel Moreno</b>',sub:'From her public agent profile'},
+ {t:+TODAY-34*M,ic:'G',k:'good',txt:'Synced to GoHighLevel',sub:'Contact updated · opportunity created · 3 tags'},
+ {t:+TODAY-60*M,ic:'⊘',k:'warm',txt:'Duplicate blocked',sub:'915 Brushy Creek Way already in CRM (seen on 2 sites)'},
+ {t:+TODAY-120*M,ic:'!',k:'hot',txt:'Slack alert: luxury listing',sub:'1207 Lakeview Terrace · $1.45M · Carlos Vega'},
+ {t:+TODAY-160*M,ic:'☀',k:'acc',txt:'Daily report emailed',sub:'22 listings · 9 new agents · 7 direct numbers'}
+];
+let fieldsMap=[
+ ['Property address','listing.address','Text'],['Listing price','listing.price','Currency'],['Date listed','listing.date_listed','Date'],['Beds / Baths','listing.beds, listing.baths','Number'],['Square footage','listing.sqft','Number'],['Listing URL','listing.url','URL'],['Listing status','listing.status','Dropdown'],['Brokerage','agent.brokerage','Text'],['Agent profile URL','agent.profile_url','URL'],['Phone type','agent.phone_type','Dropdown'],['AI category','listing.category','Dropdown']
+];
+let state={view:'home',q:'',city:'All',ptype:'All',run:null,flow:null};
+try{const h=location.hash.slice(1);if(VIEWS.some(v=>v[0]===h))state.view=h}catch(e){}
+
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const attr=s=>esc(s).replace(/'/g,'&#39;');
+const money=v=>'$'+v.toLocaleString('en-US');
+const kmoney=v=>v>=1e6?'$'+(v/1e6).toFixed(v%1e6?2:0).replace(/0$/,'')+'M':'$'+Math.round(v/1e3)+'k';
+const stageOf=id=>stages.find(s=>s.id===id)||stages[0];
+const agentOf=id=>agents.find(a=>a.id===id);
+const ini=n=>n.split(' ').map(w=>w[0]).join('').slice(0,2);
+const ago=t=>{const m=Math.max(1,Math.round((now()-t)/M));if(m<60)return m+'m';const h=Math.round(m/60);if(h<24)return h+'h';return Math.round(h/24)+'d'};
+const svg=n=>`<svg viewBox="0 0 24 24">${I[n]}</svg>`;
+const cat=l=>l.price>=1e6?'Luxury':l.status==='Price drop'?'Price drop':l.price<400000?'Starter home':'Mid-market';
+const catCls={Luxury:'Hot','Price drop':'Warm','Starter home':'Cold','Mid-market':'Warm'};
+const stCls=s=>s==='New'?'st-new':s==='Coming soon'?'st-soon':'st-drop';
+const ptCls=p=>p==='Direct mobile'?'direct':'office';
+const evColor={acc:['var(--accent-soft)','var(--accent)'],good:['var(--good-soft)','var(--good)'],hot:['var(--hot-soft)','var(--hot)'],warm:['var(--warm-soft)','var(--warm)'],vio:['var(--violet-soft)','var(--violet)']};
+const tipAttrs=(title,body,app,saved)=>`data-tip-title="${attr(title)}" data-tip="${attr(body)}"${app?` data-tip-app="${attr(app)}"`:''}${saved?` data-tip-saved="${attr(saved)}"`:''} tabindex="0"`;
+const addEvent=(ic,k,txt,sub)=>events.push({t:now(),ic,k,txt,sub});
+const listingsOf=a=>listings.filter(l=>l.agent===a.id);
+const tagsOf=l=>{const a=agentOf(l.agent);return['src:licensed-feed','city:'+l.city.toLowerCase().replace(/ /g,'-'),cat(l).toLowerCase().replace(/ /g,'-'),a.ptype==='Direct mobile'?'direct-mobile':'office-only']};
+
+/* ---------- Tooltips ---------- */
+const tipEl=$('#tip');let tipAnchor=null,tipPinned=false,lastPointer='mouse';
+function tipHTML(el){const d=el.dataset;return `${d.tipApp?`<span class="app">${esc(d.tipApp)}</span>`:''}${d.tipTitle?`<b>${esc(d.tipTitle)}</b>`:''}<span>${esc(d.tip)}</span>${d.tipSaved?`<span class="saved">⏱ ${esc(d.tipSaved)}</span>`:''}${d.tipEx?`<span class="ex">${esc(d.tipEx)}</span>`:''}`}
+function showTip(el,pin,html){tipAnchor=el;tipPinned=!!pin;tipEl.innerHTML=html||tipHTML(el);tipEl.classList.toggle('pinned',tipPinned);tipEl.hidden=false;placeTip()}
+function placeTip(){
+ if(tipEl.hidden)return;
+ if(!tipAnchor||!document.body.contains(tipAnchor)){hideTip(true);return}
+ const anchor=tipAnchor.querySelector('.tile')||tipAnchor;
+ const r=anchor.getBoundingClientRect(),w=tipEl.offsetWidth,h=tipEl.offsetHeight,vw=document.documentElement.clientWidth,vh=window.innerHeight;
+ let left=Math.max(8,Math.min(vw-w-8,r.left+r.width/2-w/2)),top=r.top-h-10,below=false;
+ if(top<8){top=r.bottom+10;below=true}
+ if(top+h>vh-8)top=Math.max(8,vh-h-8);
+ tipEl.style.left=left+'px';tipEl.style.top=top+'px';tipEl.classList.toggle('below',below);
+ tipEl.style.setProperty('--ax',Math.max(14,Math.min(w-14,r.left+r.width/2-left))+'px');
+}
+function hideTip(force){if(tipPinned&&!force)return;tipEl.hidden=true;tipAnchor=null;tipPinned=false;if(!state.flow)clearLit()}
+document.addEventListener('pointerdown',e=>{lastPointer=e.pointerType||'mouse'},true);
+document.addEventListener('mouseover',e=>{if(lastPointer==='touch')return;const el=e.target.closest&&e.target.closest('[data-tip]');if(!el||tipPinned||el===tipAnchor)return;showTip(el);if(el.dataset.node&&!state.flow)lightNode(el.dataset.node)});
+document.addEventListener('mouseout',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(!el||tipPinned)return;if(e.relatedTarget&&el.contains(e.relatedTarget))return;hideTip()});
+document.addEventListener('focusin',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el&&!tipPinned){showTip(el);if(el.dataset.node&&!state.flow)lightNode(el.dataset.node)}});
+document.addEventListener('focusout',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el&&!tipPinned&&(!e.relatedTarget||!el.contains(e.relatedTarget)))hideTip()});
+window.addEventListener('scroll',placeTip,true);window.addEventListener('resize',placeTip);
+
+/* ---------- Nav ---------- */
+function renderNav(){
+ const fresh=listings.filter(l=>now()-l.listed<DAY).length;
+ $('#nav').innerHTML=VIEWS.map(([id,name])=>`<button data-v="${id}" ${state.view===id?'aria-current="page"':''}>${svg(id)}<span>${name}</span>${id==='listings'?`<span class="count">${fresh}</span>`:''}${id==='agents'?`<span class="count">${agents.length}</span>`:''}</button>`).join('');
+ $('#pipes').innerHTML=stages.map(s=>`<div><i style="background:${s.color}"></i><span>${esc(s.name)}</span><span>${agents.filter(a=>a.stage===s.id).length}</span></div>`).join('');
+}
+function feedHTML(n){return events.slice().sort((a,b)=>b.t-a.t).slice(0,n).map(e=>{const c=evColor[e.k];return `<div class="ev"><i style="background:${c[0]};color:${c[1]}">${e.ic}</i><div>${e.txt}<small>${e.sub} · ${ago(e.t)} ago</small></div></div>`}).join('')}
+const st=(ic,bg,fg,num,lab,tt,tb,app,saved)=>`<div class="stat" ${tipAttrs(tt,tb,app,saved)}><div class="row"><div class="ic" style="background:${bg};color:${fg}"><svg viewBox="0 0 24 24">${ic}</svg></div><div class="num">${num}</div></div><div class="lab">${lab}</div></div>`;
+
+/* ---------- Home ---------- */
+function vHome(){
+ const today=listings.filter(l=>now()-l.listed<DAY);
+ const newAgents=agents.filter(a=>now()-a.first<DAY).length;
+ const direct=Math.round(agents.filter(a=>a.ptype==='Direct mobile').length/agents.length*100);
+ const top=listings.slice().sort((a,b)=>b.listed-a.listed).slice(0,6);
+ return `
+ <section class="banner"><div class="big">SC</div><div><small>Good morning,</small><h2>Sam</h2><small>Owner · Brightline Partners demo workspace</small></div>
+  <div class="meta"><b>${TODAY.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'})}</b><span>Next scan in 18 min · ${searches.filter(s=>s.on).length} searches active</span></div></section>
+ <section class="stats">
+  ${st(I.listings,'var(--accent-soft)','var(--accent)',today.length,'New listings today','New listings today','Listings that came on the market in the last 24 hours and match your saved searches.','Licensed listing feed','~2 hrs/day of checking 4 sites')}
+  ${st('<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.4 3.4-5 6.5-5s5.7 1.6 6.5 5M19 8v6M16 11h6"/>','var(--violet-soft)','var(--violet)',newAgents,'New agents added','New agents','Listing agents who were not in your CRM before. Each one becomes a GoHighLevel contact.','GoHighLevel','~4 min per contact of data entry')}
+  ${st('<path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1.9.4 1.8.7 2.7a2 2 0 0 1-.5 2.1L8 9.8a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.7.7a2 2 0 0 1 1.7 2z"/>','var(--good-soft)','var(--good)',direct+'%','Agents with a direct mobile','Direct numbers','The share of agents where a public direct business mobile was found, not just the brokerage office line.','Agent directory + enrichment','~6 min per agent of searching')}
+  ${st('<path d="M9 9h6v6H9z"/><path d="M4 4h16v16H4z"/>','var(--warm-soft)','var(--warm)',17,'Duplicates blocked this week','Duplicate guard','The same home listed on Zillow, Redfin and Realtor.com is saved once. Agents are matched by phone and email.','Supabase + GoHighLevel','No double outreach')}
+ </section>
+ <section class="grid2">
+  <div class="panel"><h3>Newest listings<button class="link" data-go="listings">View all →</button></h3>
+   <div class="rows">${top.map(l=>{const a=agentOf(l.agent);return `<button class="lrow" data-listing="${l.id}"><span class="status ${stCls(l.status)}">${l.status}</span><span class="who"><b>${esc(l.addr)} · ${money(l.price)}</b><small>${esc(l.city)} · ${l.beds} bd · ${l.baths} ba · ${a.name} (${esc(a.brok)})</small></span><span class="ptype ${ptCls(a.ptype)}">${a.ptype==='Direct mobile'?'Direct':'Office'}</span></button>`}).join('')}</div>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+   <div class="panel"><h3>This month</h3>
+    <div class="kv"><span>Listings collected</span><b>612</b></div>
+    <div class="kv"><span>Agents in database</span><b>173</b></div>
+    <div class="kv"><span>Synced to GoHighLevel</span><b>100%</b></div>
+    <div class="kv"><span>Team hours saved</span><b>58 hrs</b></div>
+   </div>
+   <div class="panel"><h3>Automation activity<button class="link" data-go="automations">All →</button></h3><div class="feed">${feedHTML(5)}</div></div>
+  </div>
+ </section>`;
+}
+
+/* ---------- Listings ---------- */
+function runHTML(r){
+ return `<div class="runpanel" role="status"><h4>⚡ Scan results: ${esc(r.name)}<button class="btn ghost small" data-dismiss>Dismiss</button></h4>
+ <ol>${r.steps.slice(0,r.shown).map(s=>`<li><i>✓</i><div>${esc(s[0])}<small>${esc(s[1])}</small></div></li>`).join('')}${r.shown<r.steps.length?'<li><i style="background:var(--muted)">…</i><div style="color:var(--muted)">Working…</div></li>':''}</ol></div>`;
+}
+function vListings(){
+ const q=state.q.toLowerCase(),cities=['All',...new Set(listings.map(l=>l.city))];
+ const list=listings.filter(l=>(state.city==='All'||l.city===state.city)&&(!q||[l.addr,l.city,agentOf(l.agent).name,agentOf(l.agent).brok].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.listed-a.listed);
+ return `${state.run?runHTML(state.run):''}
+ <div class="tools"><div class="seg" role="group" aria-label="Filter by city">${cities.map(c=>`<button data-city="${c}" aria-pressed="${state.city===c}">${c}</button>`).join('')}</div><span class="note">${list.length} listings · click a row for full details</span></div>
+ <div class="tablewrap"><table><thead><tr><th>Property</th><th>Status</th><th class="num">Price</th><th>Beds / Baths</th><th class="num">Sq ft</th><th>Listing agent</th><th>Seen on</th><th>AI category</th><th>GHL</th><th>Listed</th></tr></thead><tbody>
+ ${list.map(l=>{const a=agentOf(l.agent);return `<tr class="click ${l.fresh?'fresh':''}" data-listing="${l.id}"><td><b>${esc(l.addr)}</b><br><small style="color:var(--muted)">${esc(l.city)}, TX · ${esc(l.type)}</small></td><td><span class="status ${stCls(l.status)}">${l.status}</span></td><td class="num">${money(l.price)}</td><td>${l.beds} / ${l.baths}</td><td class="num">${l.sqft.toLocaleString()}</td><td>${esc(a.name)}<br><small style="color:var(--muted)">${esc(a.brok)}</small></td><td><span class="src">${l.seen.map(s=>`<span>${s}</span>`).join('')}</span></td><td><span class="pill ${catCls[cat(l)]}">${cat(l)}</span></td><td><span class="ghl ${l.ghl==='Synced'?'':'pending'}">${l.ghl}</span></td><td style="color:var(--muted);white-space:nowrap">${ago(l.listed)} ago</td></tr>`}).join('')||'<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:30px">No listings match. Try another city.</td></tr>'}
+ </tbody></table></div>`;
+}
+
+/* ---------- Agents ---------- */
+function vAgents(){
+ const q=state.q.toLowerCase();
+ const list=agents.filter(a=>(state.ptype==='All'||a.ptype===state.ptype)&&(!q||[a.name,a.brok,a.email,a.phone].join(' ').toLowerCase().includes(q))).sort((a,b)=>b.first-a.first);
+ return `<div class="tools"><div class="seg" role="group" aria-label="Filter by phone type">${['All','Direct mobile','Office only'].map(f=>`<button data-ptype="${f}" aria-pressed="${state.ptype===f}">${f}</button>`).join('')}</div><span class="note">${list.length} agents · one record per agent, no duplicates</span></div>
+ <div class="tablewrap"><table><thead><tr><th>Agent</th><th>Brokerage</th><th>Phone</th><th>Email</th><th class="num">Listings</th><th>Stage</th><th>GHL contact</th></tr></thead><tbody>
+ ${list.map(a=>{const s=stageOf(a.stage);return `<tr class="click" data-agent="${a.id}"><td><div style="display:flex;gap:10px;align-items:center"><span class="av" style="background:var(--accent)">${ini(a.name)}</span><b>${esc(a.name)}</b></div></td><td>${esc(a.brok)}</td><td><span class="mono">${esc(a.phone)}</span><br><span class="ptype ${ptCls(a.ptype)}">${a.ptype}</span></td><td class="mono">${esc(a.email)}</td><td class="num">${listingsOf(a).length}</td><td><span class="stage-chip" style="border-left:3px solid ${s.color}">${esc(s.name)}</span></td><td><span class="ghl">${a.ghlId}</span></td></tr>`}).join('')||'<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px">No agents match.</td></tr>'}
+ </tbody></table></div>`;
+}
+
+/* ---------- Board ---------- */
+function vBoard(){
+ return `<div class="tools"><span class="note">This mirrors the "Agent Outreach" pipeline in your GoHighLevel sub-account. Drag a card to move it.</span></div>
+ <div class="board">${stages.map(s=>{const ls=agents.filter(a=>a.stage===s.id);return `<div class="col" data-stage="${s.id}"><header><i style="background:${s.color}"></i>${esc(s.name)}<span>${ls.length}</span></header><div class="sum">${ls.reduce((n,a)=>n+listingsOf(a).length,0)} active listings</div>
+ ${ls.length?ls.map(a=>`<div class="card" draggable="true" data-agent="${a.id}" tabindex="0" role="button"><div class="t"><div><b>${esc(a.name)}</b><br><small>${esc(a.brok)}</small></div><span class="ptype ${ptCls(a.ptype)}">${a.ptype==='Direct mobile'?'Direct':'Office'}</span></div><small>${esc(a.note)}</small><div class="f"><span>${listingsOf(a).length} listing${listingsOf(a).length===1?'':'s'}</span><b>${a.ghlId}</b></div></div>`).join(''):'<div class="empty-col">Drop agents here</div>'}</div>`}).join('')}</div>`;
+}
+
+/* ---------- Searches ---------- */
+function vSearches(){
+ return `<p class="note">Each saved search runs on its own schedule. Click "Run now" to watch a scan.</p>
+ <section class="searches">${searches.map(s=>`<div class="search-card"><header><b>${esc(s.name)}</b><button class="switch" role="switch" aria-checked="${s.on}" aria-label="Turn ${attr(s.name)} ${s.on?'off':'on'}" data-search-on="${s.id}"></button></header>
+  <div class="kvs"><div><span>Location:</span> ${esc(s.loc)}</div><div><span>Price:</span> ${kmoney(s.min)} – ${s.max?kmoney(s.max):'no max'}</div><div><span>Type:</span> ${esc(s.type)}</div><div><span>Runs:</span> ${esc(s.freq)}</div></div>
+  <footer><span>${s.found} found this month</span><button class="btn small" data-runsearch="${s.id}" ${s.on?'':'disabled'}>▶ Run now</button></footer></div>`).join('')}</section>`;
+}
+
+/* ---------- Automations ---------- */
+function vAutos(){
+ return `<p class="note">Hover or tap a card to see what it does, which app runs it and the time it saves.</p>
+ <section class="autos">${autos.map(a=>`<div class="auto" ${tipAttrs(a.name,a.desc,a.app,a.saved)}><header><b>${esc(a.name)}</b><button class="switch" role="switch" aria-checked="${a.on}" aria-label="Turn ${attr(a.name)} ${a.on?'off':'on'}" data-auto="${a.id}"></button></header><span class="trig">${esc(a.trig)}</span><p>${esc(a.desc)}</p><span class="runs">${a.on?`Ran ${a.runs} times this month`:'Paused'}</span></div>`).join('')}</section>
+ <div class="panel"><h3>Activity log</h3><div class="feed">${feedHTML(14)}</div></div>`;
+}
+
+/* ---------- Reports ---------- */
+function vReports(){
+ const days=[...Array(7)].map((_,i)=>new Date(+TODAY-(6-i)*DAY));
+ const lc=[18,24,21,27,19,11,listings.filter(l=>now()-l.listed<DAY).length+12],ac=[7,9,6,11,8,4,agents.filter(a=>now()-a.first<DAY).length+5];
+ const top=Math.ceil(Math.max(...lc)/10)*10,W=560,Hh=230,pl=34,pb=26,pt=14,bw=(W-pl)/7,y=v=>pt+(Hh-pt-pb)*(1-v/top);
+ let g='';for(let v=0;v<=top;v+=top/2)g+=`<line x1="${pl}" x2="${W}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${pl-8}" y="${y(v)+4}" text-anchor="end">${v}</text>`;
+ const bars=lc.map((c,i)=>{const x=pl+i*bw+bw*.14,w=bw*.34;return `<rect x="${x}" y="${y(c)}" width="${w}" height="${Hh-pb-y(c)}" rx="3" fill="var(--accent)"/><rect x="${x+w+3}" y="${y(ac[i])}" width="${w}" height="${Hh-pb-y(ac[i])}" rx="3" fill="var(--violet)"/><text x="${x+w}" y="${y(c)-6}" text-anchor="middle" style="fill:var(--fg);font-weight:600">${c}</text><text x="${x+w}" y="${Hh-8}" text-anchor="middle">${days[i].toLocaleDateString('en-US',{weekday:'short'})}</text>`}).join('');
+ const by={};listings.forEach(l=>by[l.city]=(by[l.city]||0)+1);const cities=Object.entries(by).sort((a,b)=>b[1]-a[1]),cmax=cities[0][1];
+ const cats={};listings.forEach(l=>cats[cat(l)]=(cats[cat(l)]||0)+1);const cl=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+ const direct=agents.filter(a=>a.ptype==='Direct mobile').length;
+ return `<section class="stats">
+  <div class="stat" ${tipAttrs('Listings collected','All listings saved this month across every saved search, after duplicates are removed.','Licensed listing feed','')}><div class="lab">Listings this month</div><div class="num">612</div></div>
+  <div class="stat" ${tipAttrs('Agents collected','Unique listing agents added to GoHighLevel this month.','GoHighLevel','')}><div class="lab">New agents this month</div><div class="num">173</div></div>
+  <div class="stat" ${tipAttrs('Direct number rate','Share of agents where a public direct mobile was found.','Enrichment API','')}><div class="lab">Direct mobile found</div><div class="num">${Math.round(direct/agents.length*100)}%</div></div>
+  <div class="stat" ${tipAttrs('Data accuracy','Share of records that passed AI validation (valid phone format, email, address and price) on the first try.','Claude','')}><div class="lab">Passed validation</div><div class="num">97%</div></div>
+ </section>
+ <section class="grid2">
+  <div class="panel chart"><h3>Collected, last 7 days</h3><div class="legend"><span><i style="background:var(--accent)"></i>Listings</span><span><i style="background:var(--violet)"></i>New agents</span></div><svg viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Bar chart of listings and new agents per day">${g}${bars}</svg></div>
+  <div class="panel"><h3>Phone type found</h3><div class="hbar">
+   <div class="r"><span>Direct mobile</span><div class="track"><div style="width:${direct/agents.length*100}%;background:var(--good)"></div></div><b>${direct}</b></div>
+   <div class="r"><span>Office only</span><div class="track"><div style="width:${(agents.length-direct)/agents.length*100}%;background:var(--warm)"></div></div><b>${agents.length-direct}</b></div>
+  </div><p class="note" style="margin-top:14px">Office-only agents get an "office-only" tag in GHL so your team emails them first.</p></div>
+ </section>
+ <section class="grid2">
+  <div class="panel"><h3>Listings by city</h3><div class="hbar">${cities.map(([s,c])=>`<div class="r"><span>${esc(s)}</span><div class="track"><div style="width:${c/cmax*100}%"></div></div><b>${c}</b></div>`).join('')}</div></div>
+  <div class="panel"><h3>AI categories</h3><div class="hbar">${cl.map(([s,c])=>`<div class="r"><span class="pill ${catCls[s]}" style="justify-self:start">${s}</span><div class="track"><div style="width:${c/listings.length*100}%"></div></div><b>${c}</b></div>`).join('')}</div></div>
+ </section>`;
+}
+
+/* ---------- Setup ---------- */
+function vSetup(){
+ return `<div class="panel"><h3>Approved data sources</h3>
+ <p class="note" style="margin-bottom:12px">Zillow, Realtor.com, Redfin and Homes.com don't allow automated scraping in their terms. This system uses licensed and approved sources for the same listings instead, and keeps a note of which portals each listing appears on.</p>
+ <div class="dsrc">
+  <div class="ds" ${tipAttrs('Licensed listing feed','New listings, price, beds, baths, sqft, status and listing agent come from an MLS/IDX feed through the RESO Web API. Access is set up with the client\'s broker or MLS.','RESO Web API','')}><b>MLS / IDX listing feed</b><p>New listings, status changes and listing agent for each property.</p><span class="ok">✓ Licensed access</span></div>
+  <div class="ds" ${tipAttrs('Property data API','A paid property data provider fills gaps such as square footage and listing history. Picked per budget and coverage.','Approved data provider','')}><b>Property data API</b><p>Fills missing details and checks prices and addresses.</p><span class="ok">✓ Commercial license</span></div>
+  <div class="ds" ${tipAttrs('Agent contact sources','Public business contact details only: state license lookup, brokerage roster and agent profile pages, plus a B2B enrichment API.','Public business data','')}><b>Agent contact sources</b><p>State license lookup, brokerage rosters, agent profiles and a B2B enrichment API.</p><span class="ok">✓ Business contacts only</span></div>
+ </div>
+ <ul class="checklist" style="margin-top:14px"><li>Only public business contact details are stored, never personal data.</li><li>Numbers are checked against Do Not Call lists before any call or text.</li><li>Opt-out requests are tagged in GHL and stop all outreach automatically.</li></ul>
+ </div>
+ <section class="grid2">
+  <div class="panel"><h3>GoHighLevel custom fields</h3><div class="tablewrap" style="border:0"><table style="min-width:420px"><thead><tr><th>Field</th><th>GHL key</th><th>Type</th></tr></thead><tbody>${fieldsMap.map(f=>`<tr><td>${f[0]}</td><td class="mono">${f[1]}</td><td>${f[2]}</td></tr>`).join('')}</tbody></table></div></div>
+  <div style="display:flex;flex-direction:column;gap:14px;min-width:0">
+   <div class="panel"><h3>Tags added automatically</h3><div class="wf-legend">${['src:licensed-feed','city:austin','luxury','price-drop','starter-home','direct-mobile','office-only','new-agent','dnc-checked'].map(t=>`<span class="app-chip">${t}</span>`).join('')}</div></div>
+   <div class="panel"><h3>Duplicate rules</h3>
+    <div class="kv"><span>Same listing</span><b>Address + unit match</b></div>
+    <div class="kv"><span>Same agent</span><b>Phone or email or license #</b></div>
+    <div class="kv"><span>If agent exists</span><b>Update, add listing</b></div>
+    <div class="kv"><span>Opportunity</span><b>One per agent</b></div>
+   </div>
+   <div class="panel"><h3>Sub-account</h3>
+    <div class="kv"><span>Name</span><b>Brightline · Listing Radar</b></div>
+    <div class="kv"><span>Pipeline</span><b>Agent Outreach (5 stages)</b></div>
+    <div class="kv"><span>Connection</span><b><span class="ghl">Private API key</span></b></div>
+   </div>
+  </div>
+ </section>`;
+}
+
+/* ---------- Workflow ---------- */
+const G={
+ clock:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4M8 14h3v3"/>',
+ feed:'<path d="M3 10.5 12 4l9 6.5V20a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M9 21v-6h6v6"/>',
+ db:'<ellipse cx="12" cy="5.5" rx="7" ry="2.5"/><path d="M5 5.5v13c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5v-13M5 12c0 1.4 3.1 2.5 7 2.5s7-1.1 7-2.5"/>',
+ ai:'<path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><path d="M12 7.5 13.4 10.6 16.5 12 13.4 13.4 12 16.5 10.6 13.4 7.5 12 10.6 10.6z"/>',
+ user:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+ crm:'<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16M15 4v10"/>',
+ branch:'<path d="M6 4v6a4 4 0 0 0 4 4h8M18 14l-3-3M18 14l-3 3M6 4v16"/>',
+ bell:'<path d="M6 8a6 6 0 1 1 12 0c0 7 3 8 3 8H3s3-1 3-8M10 20a2 2 0 0 0 4 0"/>',
+ mail:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3.5 6 8.5 7 8.5-7"/>',
+ opp:'<path d="M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>'
+};
+const NODES=[
+ {id:'cron',x:10,y:170,g:'clock',c:'#7A5CC2',t:'Every 2 hours',a:'Schedule',trig:1,d:'Starts a scan for each active saved search, 6 AM to 10 PM.',ex:'search: Austin core'},
+ {id:'feed',x:170,y:170,g:'feed',c:'#0F7C8C',t:'Pull new listings',a:'MLS/IDX feed',d:'Asks the licensed feed for listings added since the last scan that match location, price and type.',ex:'41 listings since 07:40'},
+ {id:'dupe',x:330,y:170,g:'db',c:'#2E9E6A',t:'Skip duplicates',a:'Supabase',d:'Checks each address against listings already saved. Repeats from other portals are merged, not re-added.',ex:'1 duplicate skipped'},
+ {id:'ai',x:490,y:170,g:'ai',c:'#C2410C',t:'Extract + clean',a:'Claude',d:'Fills and checks price, beds, baths, sqft and status. Fixes formats and tags a category.',ex:'category: Mid-market\nsqft: 2,410 ✓'},
+ {id:'enrich',x:650,y:170,g:'user',c:'#6D4FC2',t:'Find agent contact',a:'Enrichment API',d:'Looks up the listing agent\'s public business mobile, email and profile. Prefers direct numbers.',ex:'Rachel Moreno\n+1 (555) 014-2290 · direct'},
+ {id:'ghl',x:810,y:170,g:'crm',c:'#1F6FD1',t:'Create/update contact',a:'GoHighLevel',d:'Upserts the agent contact by phone/email, fills custom fields and adds tags.',ex:'contact GHL-48247 · 4 tags'},
+ {id:'if',x:970,y:170,g:'branch',c:'#6B7F8C',t:'New agent or hot?',a:'IF',d:'New agents and listings that match a hot search get an opportunity and an alert.',ex:'new agent: yes'},
+ {id:'opp',x:1130,y:50,g:'opp',c:'#1F6FD1',t:'Create opportunity',a:'GoHighLevel',d:'Adds the agent to the Agent Outreach pipeline at "New agent".',ex:'pipeline: Agent Outreach'},
+ {id:'alert',x:1130,y:290,g:'bell',c:'#C27A0E',t:'Alert the team',a:'Slack',d:'Posts the address, price and agent\'s direct number so someone can reach out first.',ex:'#new-listings'},
+ {id:'cron2',x:10,y:400,g:'clock',c:'#7A5CC2',t:'Every day 7:00 AM',a:'Schedule',trig:1,d:'Builds the daily report.',ex:'07:00 run'},
+ {id:'count',x:170,y:400,g:'db',c:'#2E9E6A',t:'Count yesterday',a:'Supabase',d:'Counts listings, new agents, direct numbers and duplicates blocked.',ex:'22 listings · 9 agents'},
+ {id:'sum',x:330,y:400,g:'ai',c:'#C2410C',t:'Write summary',a:'Claude',d:'Writes a short plain-English summary with the best leads to call.',ex:'"3 luxury listings in Westlake…"'},
+ {id:'mail',x:490,y:400,g:'mail',c:'#C93A2E',t:'Email the report',a:'Email',d:'Sends the summary to the owner and sales team.',ex:'to: sam@'}
+];
+const WIRES=[['cron','feed'],['feed','dupe'],['dupe','ai'],['ai','enrich'],['enrich','ghl'],['ghl','if'],['if','opp','Yes'],['if','alert','Hot'],['cron2','count'],['count','sum'],['sum','mail']];
+const RUN=['cron','feed','dupe','ai','enrich','ghl','if','opp','alert'];
+const RUNTXT={cron:'The 9:40 AM scan starts for "Austin core".',feed:'The licensed feed returns 41 listings added since the last scan.',dupe:'4812 Juniper Ridge Dr is new. 1 other listing was already saved and is skipped.',ai:'Claude checks the details: 4 bd, 3 ba, 2,410 sqft, $689,000. Category: Mid-market.',enrich:'The agent is Rachel Moreno at Hillcrest Realty Group. Her direct mobile is on her public profile.',ghl:'GoHighLevel contact updated with the listing in custom fields and 4 tags.',if:'Rachel is a new agent, so both branches run.',opp:'Opportunity created in Agent Outreach → "New agent".',alert:'Slack alert sent to #new-listings with her direct number. Done.'};
+function vFlow(){
+ const n=id=>NODES.find(x=>x.id===id);
+ const wires=WIRES.map(([a,b,l])=>{const A=n(a),B=n(b),x1=A.x+108,y1=A.y+35,x2=B.x+42,y2=B.y+35,mx=(x1+x2)/2;
+  return `<path class="wire" data-w="${a}-${b}" d="M${x1} ${y1} C${mx} ${y1} ${mx} ${y2} ${x2} ${y2}"/><circle class="dotend" cx="${x2}" cy="${y2}" r="3"/>${l?`<text class="lbl" x="${mx}" y="${(y1+y2)/2-7}" text-anchor="middle">${l}</text>`:''}`}).join('');
+ const apps=[['MLS/IDX feed (RESO API)','#0F7C8C'],['Property data API','#3F6A8A'],['Claude','#C2410C'],['Enrichment API','#6D4FC2'],['Supabase','#2E9E6A'],['GoHighLevel','#1F6FD1'],['Slack','#C27A0E'],['Email','#C93A2E']];
+ return `<div class="tools"><button class="btn" id="runFlow">▶ Run test</button><div class="runbar" id="runbar" hidden></div><span class="note" id="runNote">Hover or tap any step to see what it does. Run test walks one listing through the flow.</span></div>
+ <div class="wf-wrap" id="wfWrap"><div class="wf" id="wf" style="width:1300px;height:520px"><svg class="wires" viewBox="0 0 1300 520" aria-hidden="true">${wires}</svg>
+ ${NODES.map(x=>`<div class="node${x.trig?' trigger':''}" data-node="${x.id}" ${tipAttrs(x.t,x.d,x.a,'')} data-tip-ex="${attr(x.ex)}" style="left:${x.x}px;top:${x.y}px"><div class="tile" style="color:${x.c}"><svg viewBox="0 0 24 24" stroke="currentColor">${G[x.g]}</svg></div><b>${x.t}</b><small>${x.a}</small></div>`).join('')}
+ </div></div>
+ <div class="panel"><h3>Connected apps</h3><div class="wf-legend">${apps.map(([a,c])=>`<span class="app-chip"><i style="background:${c}"></i>${a}</span>`).join('')}</div>
+ <p class="note" style="margin-top:12px">Top flow runs every 2 hours per saved search. Bottom flow runs once a day. Apps can be swapped per client (for example Claude → ChatGPT, Slack → GHL internal notification, Supabase → Airtable).</p></div>`;
+}
+function clearLit(){const wf=$('#wf');if(!wf)return;wf.classList.remove('focus');wf.querySelectorAll('.lit').forEach(x=>x.classList.remove('lit'));wf.querySelectorAll('.hl,.near').forEach(x=>x.classList.remove('hl','near'))}
+function lightNode(id,onlyIn){
+ const wf=$('#wf');if(!wf)return;clearLit();wf.classList.add('focus');
+ const me=wf.querySelector(`[data-node="${id}"]`);me&&me.classList.add('hl');
+ WIRES.forEach(([a,b])=>{if(onlyIn?b===id&&RUN.includes(a):(a===id||b===id)){const w=wf.querySelector(`[data-w="${a}-${b}"]`);w&&w.classList.add('lit');const o=wf.querySelector(`[data-node="${a===id?b:a}"]`);o&&o.classList.add('near')}});
+}
+function runShow(){
+ const r=state.flow;if(!r)return;const id=RUN[r.i],wf=$('#wf');if(!wf)return;
+ wf.querySelectorAll('.node').forEach(x=>x.classList.remove('done'));
+ RUN.slice(0,r.i).forEach(k=>{const e=wf.querySelector(`[data-node="${k}"]`);e&&e.classList.add('done')});
+ if(r.finished){const e=wf.querySelector(`[data-node="${id}"]`);e&&e.classList.add('done')}
+ lightNode(id,true);
+ const el=wf.querySelector(`[data-node="${id}"]`),wrap=$('#wfWrap');
+ if(wrap)wrap.scrollLeft=Math.max(0,el.offsetLeft-wrap.clientWidth/2+75);
+ const nd=NODES.find(x=>x.id===id);
+ showTip(el,true,`<span class="app">Step ${r.i+1} of ${RUN.length} · ${esc(nd.a)}</span><b>${esc(nd.t)}</b><span>${esc(RUNTXT[id])}</span><span class="ex">${esc(nd.ex)}</span>`);
+ const rb=$('#runbar');rb.hidden=false;$('#runNote').hidden=true;
+ rb.innerHTML=`<span class="prog">Step ${r.i+1}/${RUN.length}</span><button class="btn ghost small" data-run="back" ${r.i===0?'disabled':''}>← Back</button><button class="btn ghost small" data-run="pause">${r.playing?'❚❚ Pause':'▶ Play'}</button><button class="btn ghost small" data-run="next" ${r.finished?'disabled':''}>Next →</button><button class="btn ghost small" data-run="stop">Close</button>`;
+}
+function runTick(){const r=state.flow;if(!r)return;clearTimeout(r.timer);if(!r.playing||r.finished)return;r.timer=setTimeout(()=>runStep(1),3200)}
+function runStep(d){const r=state.flow;if(!r)return;if(d>0&&r.i===RUN.length-1){r.finished=true;r.playing=false}else{r.finished=false;r.i=Math.max(0,Math.min(RUN.length-1,r.i+d))}runShow();runTick()}
+function runStart(){if(state.flow)clearTimeout(state.flow.timer);state.flow={i:0,playing:true,finished:false};runShow();runTick()}
+function runStop(){if(state.flow)clearTimeout(state.flow.timer);state.flow=null;hideTip(true);clearLit();const wf=$('#wf');wf&&wf.querySelectorAll('.done').forEach(x=>x.classList.remove('done'));const rb=$('#runbar');if(rb){rb.hidden=true;$('#runNote').hidden=false}}
+
+/* ---------- Render ---------- */
+function render(){
+ const v=VIEWS.find(x=>x[0]===state.view);
+ $('#vTitle').textContent=v[1];$('#vSub').innerHTML=esc(v[2])+' <span class="demo-tag">Demo data</span>';
+ if(!(tipPinned&&state.flow))hideTip(true);
+ $('#view').innerHTML={home:vHome,listings:vListings,agents:vAgents,board:vBoard,searches:vSearches,workflow:vFlow,automations:vAutos,reports:vReports,setup:vSetup}[state.view]();
+ renderNav();
+}
+function go(v){if(state.flow)runStop();state.view=v;try{history.replaceState(null,'','#'+v)}catch(e){}$('#side').classList.remove('open');closeOverlay();render();window.scrollTo(0,0)}
+
+/* ---------- Drawers ---------- */
+function openListing(id){
+ const l=listings.find(x=>x.id===id);if(!l)return;const a=agentOf(l.agent);hideTip(true);
+ $('#overlay').innerHTML=`<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-label="Listing details">
+ <header><div class="av" style="background:var(--accent);width:42px;height:42px">${svg('listings').replace('<svg','<svg width="20" height="20" fill="none" stroke="#fff" stroke-width="2"')}</div><div><h2>${esc(l.addr)}</h2><small>${esc(l.city)}, TX · ${esc(l.type)}</small></div><button class="close" data-close aria-label="Close">×</button></header>
+ <div class="body">
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="status ${stCls(l.status)}">${l.status}</span><span class="pill ${catCls[cat(l)]}">${cat(l)}</span><span class="ghl">In GoHighLevel</span></div>
+  <div class="facts"><div class="fact"><small>Price</small><b>${money(l.price)}</b></div><div class="fact"><small>Beds</small><b>${l.beds}</b></div><div class="fact"><small>Baths</small><b>${l.baths}</b></div><div class="fact"><small>Sq ft</small><b>${l.sqft.toLocaleString()}</b></div><div class="fact"><small>Listed</small><b>${new Date(l.listed).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</b></div><div class="fact"><small>$ / sq ft</small><b>$${Math.round(l.price/l.sqft)}</b></div></div>
+  <div><h4>Listing URL</h4><span class="mono">${esc(l.url)}</span><div class="src" style="margin-top:6px">Also on: ${l.seen.map(s=>`<span>${s}</span>`).join('')}</div></div>
+  <div><h4>Listing agent</h4><div class="ai-box"><b>${esc(a.name)}</b> · ${esc(a.brok)}<br><span class="mono">${esc(a.phone)}</span> <span class="ptype ${ptCls(a.ptype)}">${a.ptype}</span><br><span class="mono">${esc(a.email)}</span><br><span class="mono">${esc(a.profile)}</span></div>
+   <button class="btn ghost small" style="margin-top:8px" data-agent="${a.id}">Open agent record</button></div>
+  <div><h4>Sent to GoHighLevel</h4>
+   <div class="kv"><span>Contact</span><b>${a.ghlId}</b></div>
+   <div class="kv"><span>Custom fields filled</span><b>${fieldsMap.length} of ${fieldsMap.length}</b></div>
+   <div class="kv"><span>Opportunity</span><b>Agent Outreach · ${esc(stageOf(a.stage).name)}</b></div>
+   <div class="wf-legend" style="margin-top:8px">${tagsOf(l).map(t=>`<span class="app-chip">${t}</span>`).join('')}</div></div>
+  <div><h4>Timeline</h4><div class="feed">
+   <div class="ev"><i style="background:var(--accent-soft);color:var(--accent)">+</i><div>Found in licensed feed<small>${ago(l.listed)} ago</small></div></div>
+   <div class="ev"><i style="background:var(--accent-soft);color:var(--accent)">AI</i><div>Details checked and categorized<small>a few seconds later</small></div></div>
+   <div class="ev"><i style="background:var(--good-soft);color:var(--good)">☎</i><div>Agent contact matched (${a.ptype.toLowerCase()})<small>under a minute</small></div></div>
+   <div class="ev"><i style="background:var(--good-soft);color:var(--good)">G</i><div>Synced to GoHighLevel<small>right after</small></div></div>
+  </div></div>
+ </div></aside>`;
+}
+function openAgent(id){
+ const a=agentOf(id);if(!a)return;hideTip(true);const ls=listingsOf(a);
+ $('#overlay').innerHTML=`<div class="scrim" data-close></div><aside class="drawer" role="dialog" aria-label="Agent details">
+ <header><div class="av" style="background:var(--accent);width:42px;height:42px">${ini(a.name)}</div><div><h2>${esc(a.name)}</h2><small>${esc(a.brok)}</small></div><button class="close" data-close aria-label="Close">×</button></header>
+ <div class="body">
+  <div style="display:flex;gap:8px;flex-wrap:wrap"><span class="ptype ${ptCls(a.ptype)}">${a.ptype}</span><span class="stage-chip">${ls.length} active listing${ls.length===1?'':'s'}</span><span class="ghl">${a.ghlId}</span></div>
+  <div><h4>Contact details</h4>
+   <div class="kv"><span>Phone</span><b class="mono">${esc(a.phone)}</b></div>
+   <div class="kv"><span>Email</span><b class="mono">${esc(a.email)}</b></div>
+   <div class="kv"><span>Profile</span><b class="mono">${esc(a.profile)}</b></div>
+   <div class="kv"><span>DNC check</span><b style="color:var(--good)">Passed</b></div></div>
+  <div><h4>Outreach stage</h4><select class="full" id="agentStage" data-stagefor="${a.id}">${stages.map(s=>`<option value="${s.id}" ${s.id===a.stage?'selected':''}>${esc(s.name)}</option>`).join('')}</select></div>
+  <div><h4>AI note</h4><div class="ai-box">${esc(a.note)}<br><br><b>Suggested opener:</b> "Hi ${esc(a.name.split(' ')[0])}, congrats on ${ls[0]?esc(ls[0].addr):'your new listing'}. Quick question about your buyers…"</div></div>
+  <div><h4>Their listings</h4>${ls.length?ls.map(l=>`<div class="listrow"><span>${esc(l.addr)}, ${esc(l.city)}</span><b>${money(l.price)}</b></div>`).join(''):'<p class="note">No active listings.</p>'}</div>
+ </div></aside>`;
+}
+function openNew(){
+ hideTip(true);
+ $('#overlay').innerHTML=`<div class="scrim" data-close></div><div class="modal" role="dialog" aria-label="New saved search">
+ <header><h2>New saved search</h2><button class="close" data-close aria-label="Close">×</button></header>
+ <form class="f" id="searchForm">
+  <p class="note full">Tell the system where and what to watch. Saving it runs the first scan right away.</p>
+  <label class="full">Search name<input id="fName" required value="West Austin family homes"></label>
+  <label class="full">Location<input id="fLoc" required value="Austin, TX"></label>
+  <label>Min price<select id="fMin"><option value="300000">$300k</option><option value="500000" selected>$500k</option><option value="750000">$750k</option></select></label>
+  <label>Max price<select id="fMax"><option value="900000">$900k</option><option value="1500000" selected>$1.5M</option><option value="">No max</option></select></label>
+  <label>Property type<select id="fType"><option>Single family</option><option>Condo</option><option>Townhouse</option><option>Any</option></select></label>
+  <label>How often<select id="fFreq"><option>Every hour</option><option selected>Every 2 hours</option><option>Twice a day</option></select></label>
+  <div class="act"><button type="button" class="btn ghost" data-close>Cancel</button><button class="btn" type="submit">Save and run</button></div>
+ </form></div>`;
+ $('#fName').focus();
+ $('#searchForm').onsubmit=e=>{e.preventDefault();const s={id:'s'+Date.now(),name:$('#fName').value.trim()||'New search',loc:$('#fLoc').value.trim()||'Austin, TX',min:+$('#fMin').value,max:$('#fMax').value?+$('#fMax').value:null,type:$('#fType').value,freq:$('#fFreq').value,on:true,found:0};searches.unshift(s);closeOverlay();runScan(s)};
+}
+const POOL=[
+ ['3308 Westover Rd','Austin',845000,'Single family',4,3,2720],
+ ['1711 Shoal Creek Blvd','Austin',1290000,'Single family',5,4,3610],
+ ['9020 Anderson Mill Rd','Austin',512000,'Single family',3,2,1840],
+ ['46 Lantana Ridge','Cedar Park',598000,'Single family',4,3,2490],
+ ['2405 Mopac Trail #6','Austin',689000,'Townhouse',3,2.5,1980]
+];
+let poolI=0;
+function runScan(s){
+ go('listings');
+ const picks=[POOL[poolI%POOL.length],POOL[(poolI+1)%POOL.length]];poolI+=2;
+ let newAgent=agents.find(a=>a.name==='Tara Quinn');const isNew=!newAgent;if(!newAgent)newAgent=A('Tara Quinn','Cedar & Stone Realty','+1 (555) 011-6620',1,'new',0,'New agent found from a fresh listing. Direct mobile on her profile.');
+ state.run={name:s.name,shown:0,steps:[
+  ['Pulled 38 new listings from the licensed feed','Since the last scan, for '+s.loc],
+  ['3 matched your filters','Price '+kmoney(s.min)+' – '+(s.max?kmoney(s.max):'no max')+' · '+s.type],
+  ['1 duplicate skipped','Already saved from an earlier scan (seen on 3 portals)'],
+  ['AI checked and categorized 2 listings','Price, beds, baths, sqft and status validated'],
+  ['2 agents matched · 2 direct mobiles found','1 new agent (Tara Quinn), 1 existing (Rachel Moreno)'],
+  ['GoHighLevel: 1 new contact, 1 updated, 1 opportunity','Custom fields filled and 4 tags added'],
+  ['Slack alert sent to #new-listings','With address, price and direct numbers']
+ ]};
+ const step=k=>{
+  if(!state.run)return;state.run.shown=k;
+  if(k===4){if(isNew)agents.unshift(newAgent);
+   const mk=(p,ag)=>{const l=L(p[0],p[1],p[2],p[3],p[4],p[5],p[6],0.02,'New',['Zillow','Realtor.com','Redfin'],ag);l.listed=now();l.fresh=true;l.ghl=k<6?'Syncing':'Synced';return l};
+   listings.unshift(mk(picks[0],newAgent.id),mk(picks[1],'a1'));
+   addEvent('+','acc',`<b>${esc(picks[0][0])}</b> found`,`${picks[0][1]} · ${money(picks[0][2])} · agent Tara Quinn`)}
+  if(k===6){listings.forEach(l=>{if(l.ghl==='Syncing')l.ghl='Synced'});addEvent('G','good','Synced to GoHighLevel','1 new contact · 1 updated · 1 opportunity');s.found+=2}
+  if(k===7)addEvent('!','hot','Slack alert sent',`${picks.length} new listings from "${esc(s.name)}"`);
+  if(state.view==='listings')render();
+  if(k<7)setTimeout(()=>step(k+1),1000);
+ };
+ render();setTimeout(()=>step(1),500);
+}
+function closeOverlay(){$('#overlay').innerHTML=''}
+
+/* ---------- Events ---------- */
+document.addEventListener('click',e=>{
+ const t=e.target,te=t.closest('[data-tip]');
+ if(te&&lastPointer==='touch'&&!t.closest('.switch')&&!te.dataset.node)showTip(te,true);
+ else if(!te&&!t.closest('#tip')&&!t.closest('#runbar')&&!state.flow)hideTip(true);
+ const nb=t.closest('[data-v]');if(nb)return go(nb.dataset.v);
+ const gb=t.closest('[data-go]');if(gb)return go(gb.dataset.go);
+ if(t.closest('[data-close]'))return closeOverlay();
+ const node=t.closest('[data-node]');if(node){if(state.flow)return;showTip(node,true);lightNode(node.dataset.node);return}
+ if(t.closest('#runFlow'))return runStart();
+ const rb=t.closest('[data-run]');if(rb){const a=rb.dataset.run,r=state.flow;if(a==='next'){r.playing=false;runStep(1)}else if(a==='back'){r.playing=false;runStep(-1)}else if(a==='pause'){r.playing=!r.playing;if(r.playing&&r.finished){r.i=0;r.finished=false}runShow();runTick()}else runStop();return}
+ if(t.closest('[data-dismiss]')){state.run=null;listings.forEach(l=>l.fresh=false);return render()}
+ const cb=t.closest('[data-city]');if(cb){state.city=cb.dataset.city;return render()}
+ const pb=t.closest('[data-ptype]');if(pb){state.ptype=pb.dataset.ptype;return render()}
+ const sw=t.closest('[data-auto]');if(sw){const a=autos.find(x=>x.id===sw.dataset.auto);a.on=!a.on;addEvent(a.on?'✓':'‖',a.on?'good':'warm',`<b>${esc(a.name)}</b> ${a.on?'turned on':'paused'}`,'Changed by Sam');return render()}
+ const so=t.closest('[data-search-on]');if(so){const s=searches.find(x=>x.id===so.dataset.searchOn);s.on=!s.on;return render()}
+ const rs=t.closest('[data-runsearch]');if(rs){return runScan(searches.find(x=>x.id===rs.dataset.runsearch))}
+ const li=t.closest('[data-listing]');if(li)return openListing(li.dataset.listing);
+ const ag=t.closest('[data-agent]');if(ag)return openAgent(ag.dataset.agent);
+ if(t.closest('#bell'))return go('listings');
+});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Escape'){closeOverlay();$('#side').classList.remove('open');if(state.flow)runStop();else hideTip(true)}
+ const c=e.target.closest&&e.target.closest('.card,[data-node]');
+ if(c&&(e.key==='Enter'||e.key===' ')&&e.target===c){e.preventDefault();c.click()}
+});
+document.addEventListener('change',e=>{const t=e.target;if(t.dataset.stagefor){const a=agentOf(t.dataset.stagefor);a.stage=t.value;addEvent('→','acc',`<b>${esc(a.name)}</b> moved to ${esc(stageOf(a.stage).name)}`,'Updated in GoHighLevel');renderNav();if(state.view==='board'||state.view==='agents')render()}});
+document.addEventListener('dragstart',e=>{const c=e.target.closest&&e.target.closest('.card');if(!c)return;c.classList.add('dragging');e.dataTransfer.setData('text/plain',c.dataset.agent);e.dataTransfer.effectAllowed='move'});
+document.addEventListener('dragend',()=>{document.querySelectorAll('.dragging,.over').forEach(x=>x.classList.remove('dragging','over'))});
+document.addEventListener('dragover',e=>{const col=e.target.closest&&e.target.closest('.col');if(!col)return;e.preventDefault();document.querySelectorAll('.col.over').forEach(x=>x!==col&&x.classList.remove('over'));col.classList.add('over')});
+document.addEventListener('drop',e=>{const col=e.target.closest&&e.target.closest('.col');if(!col)return;e.preventDefault();const a=agentOf(e.dataTransfer.getData('text/plain'));if(a&&a.stage!==col.dataset.stage){a.stage=col.dataset.stage;addEvent('→','good',`<b>${esc(a.name)}</b> moved to ${esc(stageOf(a.stage).name)}`,'Opportunity updated in GoHighLevel')}render()});
+$('#q').addEventListener('input',e=>{state.q=e.target.value;if(!['listings','agents'].includes(state.view)){state.view='listings';try{history.replaceState(null,'','#listings')}catch(_){}}render();$('#q').focus()});
+$('#newBtn').onclick=openNew;
+$('#menuBtn').onclick=()=>$('#side').classList.toggle('open');
+window.addEventListener('hashchange',()=>{const h=location.hash.slice(1);if(VIEWS.some(v=>v[0]===h)&&h!==state.view)go(h)});
+render();
+</script>
+
+</body>
+</html>

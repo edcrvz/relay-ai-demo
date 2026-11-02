@@ -288,17 +288,6 @@ td.c,th.c{text-align:center}
 /* Team */
 .perm input{width:16px;height:16px;accent-color:var(--accent)}
 .role{font-size:12px;font-weight:600;padding:2px 9px;border-radius:6px;background:var(--surface-2);border:1px solid var(--line)}
-/* Mobile */
-.mob{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
-.phone{width:300px;max-width:100%;border:10px solid #0E2633;border-radius:38px;background:var(--surface);overflow:hidden;box-shadow:0 12px 30px rgba(10,30,40,.18);flex:none}
-.phone .bar{height:26px;background:var(--surface);display:flex;justify-content:space-between;padding:4px 18px;font-size:11px;font-weight:600;font-family:var(--f-mono)}
-.phone .ph{background:var(--accent);color:var(--accent-fg);padding:10px 14px;font-family:var(--f-display);font-weight:700;display:flex;align-items:center;gap:8px}
-.phone .screen{height:470px;overflow-y:auto;display:flex;flex-direction:column}
-.phone .conv{padding:10px 12px}
-.phone .msgs{padding:12px;background:var(--chat-bg)}
-.push{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:10px 12px;font-size:12.5px;margin:10px;box-shadow:0 4px 12px rgba(10,30,40,.12)}
-.push b{display:block;font-size:12px}
-.mobfeat{flex:1;min-width:240px;display:flex;flex-direction:column;gap:12px}
 /* Drawer + modal */
 .scrim{position:fixed;inset:0;background:rgba(6,16,22,.45);z-index:20}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:440px;max-width:100%;background:var(--surface);z-index:21;display:flex;flex-direction:column;border-left:1px solid var(--line);padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);padding-right:env(safe-area-inset-right,0px)}
@@ -397,8 +386,7 @@ const VIEWS=[
  ['workflow','Workflow','How the apps connect behind the scenes'],
  ['automations','Automations','What runs on its own, day and night'],
  ['reports','Reports','How fast you reply and how many leads convert'],
- ['team','Team & Roles','Who can see and do what'],
- ['mobile','Mobile App','The same inbox on Android and iOS']
+ ['team','Team & Roles','Who can see and do what']
 ];
 const TODAY=new Date(2026,10,3,9,40);
 const H=36e5,M=6e4,DAY=864e5;
@@ -744,27 +732,6 @@ function vTeam(){
  </tbody></table></div></div>`;
 }
 
-/* ---------- Mobile ---------- */
-function vMobile(){
- const c=contacts.find(x=>x.mode==='human')||contacts[0];
- return `<div class="mob">
-  <div class="phone" aria-label="Phone preview: inbox"><div class="bar"><span>9:41</span><span>5G ▮▮▮</span></div><div class="ph">${svg('inbox').replace('<svg','<svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"')} Inbox</div>
-   <div class="push"><b>⚡ Handover · ${esc(c.name)}</b>${esc(last(c).t)}</div>
-   <div class="screen">${contacts.slice(0,6).map(x=>`<button class="conv" data-chat="${x.id}"><span class="av">${ini(x.name)}</span><span class="mid"><b><span>${esc(x.name)}</span></b><small>${esc(last(x).t)}</small></span><span class="rt"><span class="mode ${x.mode}">${x.mode==='human'?'Human':'AI'}</span></span></button>`).join('')}</div></div>
-  <div class="phone" aria-label="Phone preview: chat"><div class="bar"><span>9:41</span><span>5G ▮▮▮</span></div><div class="ph"><span class="av" style="width:26px;height:26px;font-size:10px">${ini(contacts[0].name)}</span>${esc(contacts[0].name)}</div>
-   <div class="screen msgs">${contacts[0].msgs.map(msgHTML).join('')}</div></div>
-  <div class="mobfeat">
-   <div class="panel"><h3>Android + iOS app</h3>
-    <div class="kv"><span>Built with</span><b>React Native (one codebase)</b></div>
-    <div class="kv"><span>Push alerts</span><b>Handovers, hot leads, bookings</b></div>
-    <div class="kv"><span>Take over from AI</span><b>One tap</b></div>
-    <div class="kv"><span>Same data as web</span><b>Live sync</b></div>
-    <div class="kv"><span>Release</span><b>App Store + Google Play</b></div>
-   </div>
-   <p class="note">Your team can answer handovers from anywhere. Tap a chat on the left phone to open it in the web inbox.</p>
-  </div></div>`;
-}
-
 /* ---------- Workflow ---------- */
 const G={
  chat:'<path d="M4 20l1.4-3.8A8 8 0 1 1 8.6 19z"/><path d="M9 11h6M9 14h4"/>',
@@ -840,7 +807,7 @@ function render(){
  const keepTip=tipPinned&&state.view==='workflow';
  $('#vTitle').textContent=v[1];$('#vSub').innerHTML=esc(v[2])+' <span class="demo-tag">Demo data</span>';
  if(!keepTip)hideTip(true);
- const fn={home:vHome,inbox:vInbox,board:vBoard,contacts:vContacts,agents:vAgents,workflow:vFlow,automations:vAutos,reports:vReports,team:vTeam,mobile:vMobile}[state.view];
+ const fn={home:vHome,inbox:vInbox,board:vBoard,contacts:vContacts,agents:vAgents,workflow:vFlow,automations:vAutos,reports:vReports,team:vTeam}[state.view];
  $('#view').innerHTML=fn();
  renderNav();
  const ms=$('#msgs');if(ms)ms.scrollTop=ms.scrollHeight;
